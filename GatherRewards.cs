@@ -6,7 +6,7 @@
 
 namespace Oxide.Plugins
 {
-    [Info("Gather Rewards", "Shady14u", "1.6.2")]
+    [Info("Gather Rewards", "Shady14u", "1.6.4")]
     [Description("Earn rewards through Economics/Server Rewards for killing and gathering")]
     //Define:FileOrder=1
     public partial class GatherRewards : RustPlugin

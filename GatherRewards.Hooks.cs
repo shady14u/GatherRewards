@@ -38,7 +38,7 @@ namespace Oxide.Plugins
         {
             if (!Economics && !ServerRewards) return;
             var player = entity?.ToPlayer();
-            if (!player) return;
+            if (player==null) return;
             var amount = 0f;
             var shortName = item.info.shortname;
             _resource = null;
@@ -136,8 +136,8 @@ namespace Oxide.Plugins
                         animal = "clan member";
                     }
                 }
-
-                if (player.Team.members.Contains(victim.userID) && config.Rewards[PluginRewards.TeamMember] != 0)
+                
+                if(player.Team!=null && player.Team.members.Contains(victim.userID) && config.Rewards[PluginRewards.TeamMember] != 0)
                 {
                     amount = CheckPoints(PluginRewards.TeamMember);
                     animal = "team member";

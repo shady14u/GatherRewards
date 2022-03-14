@@ -10,7 +10,7 @@ using System.Linq;
 //GatherRewards created with PluginMerge v(1.0.4.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
 namespace Oxide.Plugins
 {
-    [Info("Gather Rewards", "Shady14u", "1.6.3")]
+    [Info("Gather Rewards", "Shady14u", "1.6.4")]
     [Description("Earn rewards through Economics/Server Rewards for killing and gathering")]
     public partial class GatherRewards : RustPlugin
     {
@@ -209,7 +209,7 @@ namespace Oxide.Plugins
         {
             if (!Economics && !ServerRewards) return;
             var player = entity?.ToPlayer();
-            if (!player) return;
+            if (player==null) return;
             var amount = 0f;
             var shortName = item.info.shortname;
             _resource = null;
@@ -308,7 +308,7 @@ namespace Oxide.Plugins
                     }
                 }
                 
-                if (player.Team.members.Contains(victim.userID) && config.Rewards[PluginRewards.TeamMember] != 0)
+                if(player.Team!=null && player.Team.members.Contains(victim.userID) && config.Rewards[PluginRewards.TeamMember] != 0)
                 {
                     amount = CheckPoints(PluginRewards.TeamMember);
                     animal = "team member";
