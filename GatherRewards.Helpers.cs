@@ -32,8 +32,8 @@ namespace Oxide.Plugins
                 if (permission.UserHasPermission(player.UserIDString, groupModifier.Key))
                 {
                     amount *= float.Parse(groupModifier.Value.ToString());
+                    break;
                 }
-                break;
             }
 
             if (amount > 0)

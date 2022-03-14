@@ -1,20 +1,16 @@
 #define DEBUG
-using Newtonsoft.Json;
 using Oxide.Core;
 using Oxide.Core.Plugins;
 using Oxide.Game.Rust.Libraries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 
 //GatherRewards created with PluginMerge v(1.0.4.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
 namespace Oxide.Plugins
 {
-    [Info("Gather Rewards", "Shady14u", "1.6.1")]
+    [Info("Gather Rewards", "Shady14u", "1.6.3")]
     [Description("Earn rewards through Economics/Server Rewards for killing and gathering")]
     public partial class GatherRewards : RustPlugin
     {
@@ -383,8 +379,8 @@ namespace Oxide.Plugins
                 if (permission.UserHasPermission(player.UserIDString, groupModifier.Key))
                 {
                     amount *= float.Parse(groupModifier.Value.ToString());
+                    break;
                 }
-                break;
             }
             
             if (amount > 0)

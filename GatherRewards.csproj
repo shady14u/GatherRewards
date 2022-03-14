@@ -184,13 +184,13 @@
     <Compile Include="GatherRewards.Hooks.cs" />
     <Compile Include="GatherRewards.Lang.cs" />
     <Compile Include="GatherRewards.Permissions.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GatherRewards.Config.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="build\" />
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
