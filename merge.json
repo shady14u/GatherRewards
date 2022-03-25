@@ -34,14 +34,14 @@
   },
   "Compile Settings": {
     "Assembly Paths": [
-      "F:\\RustServer\\steamapps\\common\\rust_dedicated\\RustDedicated_Data\\Managed"
+      "D:\\RustServer\\RustDedicated_Data\\Managed"
     ],
     "Ignore Paths": [
-      "F:\\RustServer\\steamapps\\common\\rust_dedicated\\RustDedicated_Data\\Managed\\x86",
-      "F:\\RustServer\\steamapps\\common\\rust_dedicated\\RustDedicated_Data\\Managed\\x64"
+      "D:\\RustServer\\RustDedicated_Data\\Managed\\x86",
+      "D:\\RustServer\\RustDedicated_Data\\Managed\\x64"
     ],
     "Ignore Files": [
-      "F:\\RustServer\\steamapps\\common\\rust_dedicated\\RustDedicated_Data\\Managed\\Newtonsoft.Json.dll"
+      "D:\\RustServer\\RustDedicated_Data\\Managed\\Newtonsoft.Json.dll"
     ],
     "Compile Log Level (Hidden, Info, Warning, Error)": "Error"
   }
