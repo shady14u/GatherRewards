@@ -37,7 +37,8 @@ namespace Oxide.Plugins
                     { PluginRewards.Hemp, 25 },
                     { PluginRewards.Mushroom, 25 },
                     { PluginRewards.Pumpkin, 25 },
-                    { PluginRewards.TeamMember, -25 }
+                    { PluginRewards.TeamMember, -25 },
+                    {PluginRewards.Suicide, -100 }
 
                 }
             };

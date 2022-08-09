@@ -8,7 +8,8 @@
       "./"
     ],
     "Plugin Output Paths": [
-      "./build"
+      "./build",
+      "D:\\RustServer\\oxide\\plugins"
     ],
     "Reference Definitions": [],
     "Define Definitions": [

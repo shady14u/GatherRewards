@@ -180,5 +180,8 @@
     <Folder Include="build\" />
     <Folder Include="Properties\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="merge.json" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -72,6 +72,11 @@ namespace Oxide.Plugins
 
                 if (config.Settings.UseServerRewards && ServerRewards)
                 {
+                    var points = ServerRewards.Call<int>("CheckPoints", player.userID);
+                    if (points < amount && points > 0)
+                    {
+                        amount = points;
+                    }
                     ServerRewards.Call("TakePoints", new object[] { player.userID, (int)amount });
                 }
 

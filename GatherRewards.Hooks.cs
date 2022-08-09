@@ -13,7 +13,7 @@ namespace Oxide.Plugins
             RegisterPermsAndCommands();
         }
 
-        private void OnCollectiblePickup(Item item, BasePlayer player)
+        private void OnCollectiblePickup(CollectibleEntity collectible, BasePlayer player)
         {
             if (!Economics && !ServerRewards) return;
             if (player == null) return;
@@ -22,7 +22,7 @@ namespace Oxide.Plugins
 
             foreach (var configValue in config.Rewards)
             {
-                if (!item.ToString().ToLower().Contains(configValue.Key.ToLower())) continue;
+                if (!collectible.ToString().ToLower().Contains(configValue.Key.ToLower())) continue;
                 amount = config.Rewards[configValue.Key];
                 _resource = configValue.Key;
                 break;
@@ -109,6 +109,7 @@ namespace Oxide.Plugins
                 var victim = entity.ToPlayer();
                 if (player == victim)
                 {
+                    GiveCredit(player, "suicide", CheckPoints(PluginRewards.Suicide), "suicide");
                     return;
                 }
 

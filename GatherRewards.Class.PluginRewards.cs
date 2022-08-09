@@ -16,6 +16,7 @@
             public const string Stone = "Stone";
             public const string TeamMember = "Team Member";
             public const string Wood = "Wood";
+            public const string Suicide = "Suicide";
         }
     }
 }

@@ -11,7 +11,7 @@ using System.Linq;
 //GatherRewards created with PluginMerge v(1.0.4.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
 namespace Oxide.Plugins
 {
-    [Info("Gather Rewards", "Shady14u", "1.6.4")]
+    [Info("Gather Rewards", "Shady14u", "1.6.5")]
     [Description("Earn rewards through Economics/Server Rewards for killing and gathering")]
     public partial class GatherRewards : RustPlugin
     {
@@ -53,7 +53,8 @@ namespace Oxide.Plugins
                     { PluginRewards.Hemp, 25 },
                     { PluginRewards.Mushroom, 25 },
                     { PluginRewards.Pumpkin, 25 },
-                    { PluginRewards.TeamMember, -25 }
+                    { PluginRewards.TeamMember, -25 },
+                    {PluginRewards.Suicide, -100 }
                     
                 }
             };
@@ -185,7 +186,7 @@ namespace Oxide.Plugins
             RegisterPermsAndCommands();
         }
         
-        private void OnCollectiblePickup(Item item, BasePlayer player)
+        private void OnCollectiblePickup(CollectibleEntity collectible, BasePlayer player)
         {
             if (!Economics && !ServerRewards) return;
             if (player == null) return;
@@ -194,7 +195,7 @@ namespace Oxide.Plugins
             
             foreach (var configValue in config.Rewards)
             {
-                if (!item.ToString().ToLower().Contains(configValue.Key.ToLower())) continue;
+                if (!collectible.ToString().ToLower().Contains(configValue.Key.ToLower())) continue;
                 amount = config.Rewards[configValue.Key];
                 _resource = configValue.Key;
                 break;
@@ -281,6 +282,7 @@ namespace Oxide.Plugins
                 var victim = entity.ToPlayer();
                 if (player == victim)
                 {
+                    GiveCredit(player, "suicide", CheckPoints(PluginRewards.Suicide), "suicide");
                     return;
                 }
                 
@@ -420,6 +422,11 @@ namespace Oxide.Plugins
                 
                 if (config.Settings.UseServerRewards && ServerRewards)
                 {
+                    var points = ServerRewards.Call<int>("CheckPoints", player.userID);
+                    if (points < amount && points > 0)
+                    {
+                        amount = points;
+                    }
                     ServerRewards.Call("TakePoints", new object[] { player.userID, (int)amount });
                 }
                 
@@ -618,6 +625,7 @@ namespace Oxide.Plugins
             public const string Stone = "Stone";
             public const string TeamMember = "Team Member";
             public const string Wood = "Wood";
+            public const string Suicide = "Suicide";
         }
         #endregion
 
