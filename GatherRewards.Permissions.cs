@@ -14,15 +14,15 @@ namespace Oxide.Plugins
 
         private void RegisterPermsAndCommands()
         {
-            permission.RegisterPermission(config.Settings.EditPermission, this);
-            foreach (var groupModifier in config.Settings.GroupModifiers)
+            permission.RegisterPermission(_config.Settings.EditPermission, this);
+            foreach (var groupModifier in _config.Settings.GroupModifiers)
             {
                 permission.RegisterPermission(groupModifier.Key,this);
             }
 
             var command = Interface.Oxide.GetLibrary<Command>();
-            command.AddChatCommand(config.Settings.ChatEditCommand, this, "cmdGatherRewards");
-            command.AddConsoleCommand(config.Settings.ConsoleEditCommand, this, "cmdConsoleGatherRewards");
+            command.AddChatCommand(_config.Settings.ChatEditCommand, this, "cmdGatherRewards");
+            command.AddConsoleCommand(_config.Settings.ConsoleEditCommand, this, "cmdConsoleGatherRewards");
         }
 
     }

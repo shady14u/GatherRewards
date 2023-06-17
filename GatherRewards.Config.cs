@@ -7,7 +7,7 @@ namespace Oxide.Plugins
     public partial class GatherRewards
     {
      
-        private PluginConfig config;
+        private PluginConfig _config;
 
         PluginConfig DefaultConfig()
         {
@@ -23,7 +23,10 @@ namespace Oxide.Plugins
                     UseEconomics = true,
                     UseServerRewards = false,
                     PluginPrefix = "<color=#00FFFF>[GatherRewards]</color>",
-                    AwardOnlyOnFullHarvest = false
+                    AwardOnlyOnFullHarvest = false,
+                    AddMissingRewards = false,
+                    UseUINotify = false,
+                    UINotifyMessageType = 1
                 },
                 Rewards = new Dictionary<string, float>
                 {
@@ -38,8 +41,7 @@ namespace Oxide.Plugins
                     { PluginRewards.Mushroom, 25 },
                     { PluginRewards.Pumpkin, 25 },
                     { PluginRewards.TeamMember, -25 },
-                    {PluginRewards.Suicide, -100 }
-
+                    { PluginRewards.Suicide, -100 }
                 }
             };
 
@@ -88,13 +90,17 @@ namespace Oxide.Plugins
 
         private void LoadConfigValues()
         {
-            config = Config.ReadObject<PluginConfig>();
+            _config = Config.ReadObject<PluginConfig>();
             var defaultConfig = DefaultConfig();
-            Merge(config.Rewards, defaultConfig.Rewards);
-
+            Merge(_config.Rewards, defaultConfig.Rewards);
+            if (_config.Settings.Version != _version)
+            {
+                _config.Settings.Version = _version;
+                _configChanged = true;
+            } 
             if (!_configChanged) return;
             PrintWarning("Configuration file updated.");
-            Config.WriteObject(config);
+            Config.WriteObject(_config);
         }
 
         private void Merge<T1, T2>(IDictionary<T1, T2> current, IDictionary<T1, T2> defaultDict)

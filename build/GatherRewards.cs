@@ -11,19 +11,21 @@ using System.Linq;
 //GatherRewards created with PluginMerge v(1.0.4.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
 namespace Oxide.Plugins
 {
-    [Info("Gather Rewards", "Shady14u", "1.6.5")]
+    [Info("Gather Rewards", "Shady14u", "1.6.9")]
     [Description("Earn rewards through Economics/Server Rewards for killing and gathering")]
     public partial class GatherRewards : RustPlugin
     {
         #region GatherRewards.cs
         [PluginReference]
-        private Plugin Economics, ServerRewards, Friends, Clans;
+        private Plugin Economics, ServerRewards, Friends, Clans, UINotify;
         
         private string _resource;
+        
+        private string _version = "1.6.9";
         #endregion
 
         #region GatherRewards.Config.cs
-        private PluginConfig config;
+        private PluginConfig _config;
         
         PluginConfig DefaultConfig()
         {
@@ -39,7 +41,10 @@ namespace Oxide.Plugins
                     UseEconomics = true,
                     UseServerRewards = false,
                     PluginPrefix = "<color=#00FFFF>[GatherRewards]</color>",
-                    AwardOnlyOnFullHarvest = false
+                    AwardOnlyOnFullHarvest = false,
+                    AddMissingRewards = false,
+                    UseUINotify = false,
+                    UINotifyMessageType = 1
                 },
                 Rewards = new Dictionary<string, float>
                 {
@@ -54,8 +59,7 @@ namespace Oxide.Plugins
                     { PluginRewards.Mushroom, 25 },
                     { PluginRewards.Pumpkin, 25 },
                     { PluginRewards.TeamMember, -25 },
-                    {PluginRewards.Suicide, -100 }
-                    
+                    { PluginRewards.Suicide, -100 }
                 }
             };
             
@@ -104,13 +108,17 @@ namespace Oxide.Plugins
         
         private void LoadConfigValues()
         {
-            config = Config.ReadObject<PluginConfig>();
+            _config = Config.ReadObject<PluginConfig>();
             var defaultConfig = DefaultConfig();
-            Merge(config.Rewards, defaultConfig.Rewards);
-            
+            Merge(_config.Rewards, defaultConfig.Rewards);
+            if (_config.Settings.Version != _version)
+            {
+                _config.Settings.Version = _version;
+                _configChanged = true;
+            }
             if (!_configChanged) return;
             PrintWarning("Configuration file updated.");
-            Config.WriteObject(config);
+            Config.WriteObject(_config);
         }
         
         private void Merge<T1, T2>(IDictionary<T1, T2> current, IDictionary<T1, T2> defaultDict)
@@ -132,21 +140,21 @@ namespace Oxide.Plugins
         
         private void RegisterPermsAndCommands()
         {
-            permission.RegisterPermission(config.Settings.EditPermission, this);
-            foreach (var groupModifier in config.Settings.GroupModifiers)
+            permission.RegisterPermission(_config.Settings.EditPermission, this);
+            foreach (var groupModifier in _config.Settings.GroupModifiers)
             {
                 permission.RegisterPermission(groupModifier.Key,this);
             }
             
             var command = Interface.Oxide.GetLibrary<Command>();
-            command.AddChatCommand(config.Settings.ChatEditCommand, this, "cmdGatherRewards");
-            command.AddConsoleCommand(config.Settings.ConsoleEditCommand, this, "cmdConsoleGatherRewards");
+            command.AddChatCommand(_config.Settings.ChatEditCommand, this, "cmdGatherRewards");
+            command.AddConsoleCommand(_config.Settings.ConsoleEditCommand, this, "cmdConsoleGatherRewards");
         }
         #endregion
 
         #region GatherRewards.Lang.cs
-        private string Lang(string key, object userID = null) =>
-        lang.GetMessage(key, this, userID?.ToString());
+        private string Lang(string key, string userId = null) =>
+        lang.GetMessage(key, this, userId);
         
         private void Language()
         {
@@ -193,13 +201,15 @@ namespace Oxide.Plugins
             _resource = null;
             var amount = 0f;
             
-            foreach (var configValue in config.Rewards)
+            foreach (var configValue in _config.Rewards)
             {
                 if (!collectible.ToString().ToLower().Contains(configValue.Key.ToLower())) continue;
-                amount = config.Rewards[configValue.Key];
+                amount = _config.Rewards[configValue.Key];
                 _resource = configValue.Key;
                 break;
             }
+            
+            if(Interface.CallHook("OnGatherRewardsGiveCredit", player, collectible,amount)!=null) return;
             
             if (_resource != null && amount != 0)
             {
@@ -216,7 +226,7 @@ namespace Oxide.Plugins
             var shortName = item.info.shortname;
             _resource = null;
             
-            foreach (KeyValuePair<string, float> configValue in config.Rewards)
+            foreach (KeyValuePair<string, float> configValue in _config.Rewards)
             {
                 if (!shortName.Contains(configValue.Key.ToLower())) continue;
                 amount = CheckPoints(configValue.Key);
@@ -228,14 +238,14 @@ namespace Oxide.Plugins
             
             if (player.GetHeldEntity() is Jackhammer)
             {
-                amount *= config.Settings.JackHammerModifier;
+                amount *= _config.Settings.JackHammerModifier;
             }
             if(player.GetHeldEntity() is Chainsaw)
             {
-                amount *= config.Settings.ChainsawModifier;
+                amount *= _config.Settings.ChainsawModifier;
             }
             
-            if (config.Settings.AwardOnlyOnFullHarvest)
+            if (_config.Settings.AwardOnlyOnFullHarvest)
             {
                 var ent = dispenser.GetComponent<BaseEntity>();
                 NextTick(() =>
@@ -289,7 +299,7 @@ namespace Oxide.Plugins
                 amount = CheckPoints(PluginRewards.Player);
                 animal = "player";
                 
-                if (Friends && config.Rewards[PluginRewards.PlayerFriend] != 0)
+                if (Friends && _config.Rewards[PluginRewards.PlayerFriend] != 0)
                 {
                     var isFriend = Friends.Call<bool>("HasFriend", victim.userID, player.userID);
                     var isFriendReverse = Friends.Call<bool>("HasFriend", player.userID, victim.userID);
@@ -300,7 +310,7 @@ namespace Oxide.Plugins
                     }
                 }
                 
-                if (Clans && config.Rewards[PluginRewards.ClanMember] != 0)
+                if (Clans && _config.Rewards[PluginRewards.ClanMember] != 0)
                 {
                     var victimClan = Clans.Call<string>("GetClanOf", victim.userID);
                     var playerClan = Clans.Call<string>("GetClanOf", player.userID);
@@ -311,7 +321,7 @@ namespace Oxide.Plugins
                     }
                 }
                 
-                if(player.Team!=null && player.Team.members.Contains(victim.userID) && config.Rewards[PluginRewards.TeamMember] != 0)
+                if(player.Team!=null && player.Team.members.Contains(victim.userID) && _config.Rewards[PluginRewards.TeamMember] != 0)
                 {
                     amount = CheckPoints(PluginRewards.TeamMember);
                     animal = "team member";
@@ -359,17 +369,20 @@ namespace Oxide.Plugins
         #region GatherRewards.Helpers.cs
         private float CheckPoints(string animal, float defaultAmount = 0)
         {
-            foreach (var configValue in config.Rewards.Where(configValue =>
+            foreach (var configValue in _config.Rewards.Where(configValue =>
             string.Equals(animal, configValue.Key, StringComparison.CurrentCultureIgnoreCase)))
             {
                 animal = configValue.Key;
-                return config.Rewards[configValue.Key];
+                return _config.Rewards[configValue.Key];
             }
             
             if (defaultAmount == 0) return defaultAmount;
             
-            config.Rewards.Add(animal, defaultAmount);
-            Config.WriteObject(config);
+            if (_config.Settings.AddMissingRewards)
+            {
+                _config.Rewards.Add(animal, defaultAmount);
+                Config.WriteObject(_config);
+            }
             
             return defaultAmount;
         }
@@ -377,7 +390,7 @@ namespace Oxide.Plugins
         private void GiveCredit(BasePlayer player, string type, float amount, string gathered)
         {
             if(amount==0) return;
-            foreach (var groupModifier in config.Settings.GroupModifiers.OrderByDescending(x=>x.Value))
+            foreach (var groupModifier in _config.Settings.GroupModifiers.OrderByDescending(x=>x.Value))
             {
                 if (permission.UserHasPermission(player.UserIDString, groupModifier.Key))
                 {
@@ -388,39 +401,48 @@ namespace Oxide.Plugins
             
             if (amount > 0)
             {
-                if (config.Settings.UseEconomics && Economics)
+                if (_config.Settings.UseEconomics && Economics)
                 {
                     Economics.Call("Deposit", player.UserIDString, (double)amount);
                 }
                 
-                if (config.Settings.UseServerRewards && ServerRewards)
+                if (_config.Settings.UseServerRewards && ServerRewards)
                 {
                     ServerRewards.Call("AddPoints", new object[] { player.userID, (int)amount });
                 }
                 
-                if (type == "gather" && config.Settings.ShowMessagesOnGather)
+                if (type == "gather" && _config.Settings.ShowMessagesOnGather)
                 {
-                    PrintToChat(player,
-                    config.Settings.PluginPrefix + " " + string.Format(Lang("ReceivedForGather", player), amount,
-                    gathered.ToLower()));
+                    var message = _config.Settings.PluginPrefix + " " + string.Format(
+                    Lang("ReceivedForGather", player.UserIDString), amount,
+                    gathered.ToLower());
+                    PrintToChat(player, message);
+                    if (_config.Settings.UseUINotify)
+                    {
+                        UINotify?.Call("SendNotify", player.userID, _config.Settings.UINotifyMessageType, message);
+                    }
                 }
-                else if (type == "kill" && config.Settings.ShowMessagesOnKill)
+                else if (type == "kill" && _config.Settings.ShowMessagesOnKill)
                 {
-                    PrintToChat(player,
-                    config.Settings.PluginPrefix + " " + string.Format(Lang("ReceivedForKill", player), amount,
-                    gathered.ToLower()));
+                    var message = _config.Settings.PluginPrefix + " " +
+                    string.Format(Lang("ReceivedForKill", player.UserIDString), amount, gathered.ToLower());
+                    PrintToChat(player, message);
+                    if (_config.Settings.UseUINotify)
+                    {
+                        UINotify?.Call("SendNotify", player.userID, _config.Settings.UINotifyMessageType, message);
+                    }
                 }
             }
             else
             {
                 amount = Math.Abs(amount);
                 
-                if (config.Settings.UseEconomics && Economics)
+                if (_config.Settings.UseEconomics && Economics)
                 {
                     Economics.Call("Withdraw", player.UserIDString, (double)amount);
                 }
                 
-                if (config.Settings.UseServerRewards && ServerRewards)
+                if (_config.Settings.UseServerRewards && ServerRewards)
                 {
                     var points = ServerRewards.Call<int>("CheckPoints", player.userID);
                     if (points < amount && points > 0)
@@ -430,17 +452,25 @@ namespace Oxide.Plugins
                     ServerRewards.Call("TakePoints", new object[] { player.userID, (int)amount });
                 }
                 
-                if (type == "gather" && config.Settings.ShowMessagesOnGather)
+                if (type == "gather" && _config.Settings.ShowMessagesOnGather)
                 {
-                    PrintToChat(player,
-                    config.Settings.PluginPrefix + " " +
-                    string.Format(Lang("LostForGather", player), amount, gathered.ToLower()));
+                    var message = _config.Settings.PluginPrefix + " " +
+                    string.Format(Lang("LostForGather", player.UserIDString), amount, gathered.ToLower());
+                    PrintToChat(player,message);
+                    if (_config.Settings.UseUINotify)
+                    {
+                        UINotify?.Call("SendNotify", player.userID, _config.Settings.UINotifyMessageType, message);
+                    }
                 }
-                else if (type == "kill" && config.Settings.ShowMessagesOnKill)
+                else if (type == "kill" && _config.Settings.ShowMessagesOnKill)
                 {
-                    PrintToChat(player,
-                    config.Settings.PluginPrefix + " " +
-                    string.Format(Lang("LostForKill", player), amount, gathered.ToLower()));
+                    var message = _config.Settings.PluginPrefix + " " +
+                    string.Format(Lang("LostForKill", player.UserIDString), amount, gathered.ToLower());
+                    PrintToChat(player,message);
+                    if (_config.Settings.UseUINotify)
+                    {
+                        UINotify?.Call("SendNotify", player.userID, _config.Settings.UINotifyMessageType, message);
+                    }
                 }
             }
         }
@@ -458,24 +488,24 @@ namespace Oxide.Plugins
         #region GatherRewards.Commands.cs
         private void cmdGatherRewards(BasePlayer player, string command, string[] args)
         {
-            if (!(CheckPermission(player, config.Settings.EditPermission)))
+            if (!(CheckPermission(player, _config.Settings.EditPermission)))
             {
-                SendReply(player, config.Settings.PluginPrefix + " " + Lang("NoPermission", player.UserIDString));
+                SendReply(player, _config.Settings.PluginPrefix + " " + Lang("NoPermission", player.UserIDString));
                 return;
             }
             
             if (args.Length < 2)
             {
                 SendReply(player,
-                config.Settings.PluginPrefix + " " + string.Format(Lang("Usage", player.UserIDString),
-                config.Settings.ChatEditCommand));
+                _config.Settings.PluginPrefix + " " + string.Format(Lang("Usage", player.UserIDString),
+                _config.Settings.ChatEditCommand));
                 return;
             }
             
             float value;
             if (float.TryParse(args[1], out value) == false)
             {
-                SendReply(player, config.Settings.PluginPrefix + " " + Lang("NotaNumber", player.UserIDString));
+                SendReply(player, _config.Settings.PluginPrefix + " " + Lang("NotaNumber", player.UserIDString));
                 return;
             }
             
@@ -483,37 +513,37 @@ namespace Oxide.Plugins
             {
                 case "clan":
                 {
-                    config.Rewards[PluginRewards.ClanMember] = value;
-                    Config.WriteObject(config);
+                    _config.Rewards[PluginRewards.ClanMember] = value;
+                    Config.WriteObject(_config);
                     SendReply(player,
-                    config.Settings.PluginPrefix + " " +
+                    _config.Settings.PluginPrefix + " " +
                     string.Format(Lang("Success", player.UserIDString), "clan member", value));
                     break;
                 }
                 case "friend":
                 {
-                    config.Rewards[PluginRewards.PlayerFriend] = value;
-                    Config.WriteObject(config);
+                    _config.Rewards[PluginRewards.PlayerFriend] = value;
+                    Config.WriteObject(_config);
                     SendReply(player,
-                    config.Settings.PluginPrefix + " " +
+                    _config.Settings.PluginPrefix + " " +
                     string.Format(Lang("Success", player.UserIDString), "friend", value));
                     break;
                 }
                 default:
                 {
-                    if (!config.Rewards.ContainsKey(UppercaseFirst(args[0].ToLower())))
+                    if (!_config.Rewards.ContainsKey(UppercaseFirst(args[0].ToLower())))
                     {
                         SendReply(player,
-                        config.Settings.PluginPrefix + " " +
+                        _config.Settings.PluginPrefix + " " +
                         string.Format(Lang("ValueDoesNotExist", player.UserIDString), args[0].ToLower()));
                         break;
                     }
                     
-                    config.Rewards[UppercaseFirst(args[0].ToLower())] = float.Parse(args[1]);
-                    Config.WriteObject(config);
+                    _config.Rewards[UppercaseFirst(args[0].ToLower())] = float.Parse(args[1]);
+                    Config.WriteObject(_config);
                     
                     SendReply(player,
-                    config.Settings.PluginPrefix + " " + string.Format(Lang("Success", player.UserIDString),
+                    _config.Settings.PluginPrefix + " " + string.Format(Lang("Success", player.UserIDString),
                     args[0].ToLower(), value));
                     
                     break;
@@ -530,13 +560,13 @@ namespace Oxide.Plugins
             
             if (arg.Args == null)
             {
-                Puts(string.Format(Lang("Usage"), config.Settings.ConsoleEditCommand));
+                Puts(string.Format(Lang("Usage"), _config.Settings.ConsoleEditCommand));
                 return;
             }
             
             if (arg.Args.Length <= 1)
             {
-                Puts(string.Format(Lang("Usage"), config.Settings.ConsoleEditCommand));
+                Puts(string.Format(Lang("Usage"), _config.Settings.ConsoleEditCommand));
                 return;
             }
             
@@ -551,28 +581,28 @@ namespace Oxide.Plugins
             {
                 case "clan":
                 {
-                    config.Rewards[PluginRewards.ClanMember] = value;
-                    Config.WriteObject(config);
+                    _config.Rewards[PluginRewards.ClanMember] = value;
+                    Config.WriteObject(_config);
                     Puts(string.Format(Lang("Success"), "clan member", value));
                     break;
                 }
                 case "friend":
                 {
-                    config.Rewards[PluginRewards.PlayerFriend] = value;
-                    Config.WriteObject(config);
+                    _config.Rewards[PluginRewards.PlayerFriend] = value;
+                    Config.WriteObject(_config);
                     Puts(string.Format(Lang("Success"), "friend", value));
                     break;
                 }
                 default:
                 {
-                    if (!config.Rewards.ContainsKey(UppercaseFirst(arg.Args[0].ToLower())))
+                    if (!_config.Rewards.ContainsKey(UppercaseFirst(arg.Args[0].ToLower())))
                     {
                         Puts(string.Format(Lang("ValueDoesNotExist"), arg.Args[0].ToLower()));
                         break;
                     }
                     
-                    config.Rewards[UppercaseFirst(arg.Args[0].ToLower())] = float.Parse(arg.Args[1]);
-                    Config.WriteObject(config);
+                    _config.Rewards[UppercaseFirst(arg.Args[0].ToLower())] = float.Parse(arg.Args[1]);
+                    Config.WriteObject(_config);
                     Puts(string.Format(Lang("Success"), arg.Args[0].ToLower(), value));
                     
                     break;
@@ -584,10 +614,10 @@ namespace Oxide.Plugins
         #region GatherRewards.Class.PluginSettings.cs
         private class PluginSettings
         {
-            #region Properties and Indexers
+            public int UINotifyMessageType = 1;
+            public bool AddMissingRewards { get; set; }
             
-            public bool AwardOnlyOnFullHarvest { get; set; } = false;
-            
+            public bool AwardOnlyOnFullHarvest { get; set; }
             public float ChainsawModifier { get; set; } = .25f;
             public string ChatEditCommand { get; set; }
             public string ConsoleEditCommand { get; set; }
@@ -595,9 +625,9 @@ namespace Oxide.Plugins
             
             public Dictionary<string, object> GroupModifiers { get; set; } = new Dictionary<string, object>
             {
-                { "gatherrewards.vip1", 4.0 },
-                { "gatherrewards.vip2", 3.0 },
-                { "gatherrewards.vip3", 2.0 }
+                {"gatherrewards.vip1", 4.0},
+                {"gatherrewards.vip2", 3.0},
+                {"gatherrewards.vip3", 2.0}
             };
             
             public float JackHammerModifier { get; set; } = .25f;
@@ -606,8 +636,8 @@ namespace Oxide.Plugins
             public bool ShowMessagesOnKill { get; set; }
             public bool UseEconomics { get; set; }
             public bool UseServerRewards { get; set; }
-            
-            #endregion
+            public bool UseUINotify { get; set; }
+            public string Version { get; set; }
         }
         #endregion
 

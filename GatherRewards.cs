@@ -7,15 +7,16 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Gather Rewards", "Shady14u", "1.6.5")]
+    [Info("Gather Rewards", "Shady14u", "1.6.9")]
     [Description("Earn rewards through Economics/Server Rewards for killing and gathering")]
     //Define:FileOrder=1
     public partial class GatherRewards : RustPlugin
     {
         [PluginReference] 
-        private Plugin Economics, ServerRewards, Friends, Clans;
+        private Plugin Economics, ServerRewards, Friends, Clans, UINotify;
 
         private string _resource;
-        
+
+        private string _version = "1.6.9";
     }
 }

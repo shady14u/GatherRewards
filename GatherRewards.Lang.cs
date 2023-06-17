@@ -5,8 +5,8 @@ namespace Oxide.Plugins
     //Define:FileOrder=3
     public partial class GatherRewards
     {
-        private string Lang(string key, object userID = null) =>
-            lang.GetMessage(key, this, userID?.ToString());
+        private string Lang(string key, string userId = null) =>
+            lang.GetMessage(key, this, userId);
 
         private void Language()
         {

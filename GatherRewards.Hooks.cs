@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Oxide.Core;
 
 namespace Oxide.Plugins
 {
@@ -20,13 +21,15 @@ namespace Oxide.Plugins
             _resource = null;
             var amount = 0f;
 
-            foreach (var configValue in config.Rewards)
+            foreach (var configValue in _config.Rewards)
             {
                 if (!collectible.ToString().ToLower().Contains(configValue.Key.ToLower())) continue;
-                amount = config.Rewards[configValue.Key];
+                amount = _config.Rewards[configValue.Key];
                 _resource = configValue.Key;
                 break;
             }
+
+            if(Interface.CallHook("OnGatherRewardsGiveCredit", player, collectible,amount)!=null) return;
 
             if (_resource != null && amount != 0)
             {
@@ -43,7 +46,7 @@ namespace Oxide.Plugins
             var shortName = item.info.shortname;
             _resource = null;
 
-            foreach (KeyValuePair<string, float> configValue in config.Rewards)
+            foreach (KeyValuePair<string, float> configValue in _config.Rewards)
             {
                 if (!shortName.Contains(configValue.Key.ToLower())) continue;
                 amount = CheckPoints(configValue.Key);
@@ -55,14 +58,14 @@ namespace Oxide.Plugins
 
             if (player.GetHeldEntity() is Jackhammer)
             {
-                amount *= config.Settings.JackHammerModifier;
+                amount *= _config.Settings.JackHammerModifier;
             }
             if(player.GetHeldEntity() is Chainsaw)
             {
-                amount *= config.Settings.ChainsawModifier;
+                amount *= _config.Settings.ChainsawModifier;
             }
 
-            if (config.Settings.AwardOnlyOnFullHarvest)
+            if (_config.Settings.AwardOnlyOnFullHarvest)
             {
                 var ent = dispenser.GetComponent<BaseEntity>();
                 NextTick(() =>
@@ -116,7 +119,7 @@ namespace Oxide.Plugins
                 amount = CheckPoints(PluginRewards.Player);
                 animal = "player";
 
-                if (Friends && config.Rewards[PluginRewards.PlayerFriend] != 0)
+                if (Friends && _config.Rewards[PluginRewards.PlayerFriend] != 0)
                 {
                     var isFriend = Friends.Call<bool>("HasFriend", victim.userID, player.userID);
                     var isFriendReverse = Friends.Call<bool>("HasFriend", player.userID, victim.userID);
@@ -127,7 +130,7 @@ namespace Oxide.Plugins
                     }
                 }
 
-                if (Clans && config.Rewards[PluginRewards.ClanMember] != 0)
+                if (Clans && _config.Rewards[PluginRewards.ClanMember] != 0)
                 {
                     var victimClan = Clans.Call<string>("GetClanOf", victim.userID);
                     var playerClan = Clans.Call<string>("GetClanOf", player.userID);
@@ -138,7 +141,7 @@ namespace Oxide.Plugins
                     }
                 }
                 
-                if(player.Team!=null && player.Team.members.Contains(victim.userID) && config.Rewards[PluginRewards.TeamMember] != 0)
+                if(player.Team!=null && player.Team.members.Contains(victim.userID) && _config.Rewards[PluginRewards.TeamMember] != 0)
                 {
                     amount = CheckPoints(PluginRewards.TeamMember);
                     animal = "team member";
