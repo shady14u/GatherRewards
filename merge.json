@@ -2,19 +2,17 @@
   "Platform": "Oxide",
   "Merge Settings": {
     "Plugin Name": "GatherRewards",
-    "Plugin Base Class": "RustPlugin",
     "Creator Mode": "Plugin",
+    "Namespace Override": "",
     "Plugin Input Paths": [
       "./"
     ],
     "Plugin Output Paths": [
       "./build",
-      "D:\\RustTesting\\oxide\\plugins"
+      "D:\\RustServer\\oxide\\plugins"
     ],
     "Reference Definitions": [],
-    "Define Definitions": [
-      "DEBUG"
-    ],
+    "Define Definitions": [],
     "Ignore Paths": [
       "./build"
     ],
@@ -30,7 +28,7 @@
       "Indent Multiplier": 1,
       "New Line String": "\r\n",
       "Write The Relative File Path In Region": true,
-      "Keep Comments Comments": true
+      "Keep Code Comments": true
     }
   },
   "Compile Settings": {

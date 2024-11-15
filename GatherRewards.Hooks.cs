@@ -83,8 +83,6 @@ namespace Oxide.Plugins
                     }
                     
                     GiveCredit(player, "gather", amount, item.info.shortname);
-                    
-                    return;
                 });
             
             }
@@ -121,8 +119,8 @@ namespace Oxide.Plugins
 
                 if (Friends && _config.Rewards[PluginRewards.PlayerFriend] != 0)
                 {
-                    var isFriend = Friends.Call<bool>("HasFriend", victim.userID, player.userID);
-                    var isFriendReverse = Friends.Call<bool>("HasFriend", player.userID, victim.userID);
+                    var isFriend = Friends.Call<bool>("HasFriend", victim.UserIDString, player.UserIDString);
+                    var isFriendReverse = Friends.Call<bool>("HasFriend", player.UserIDString, victim.UserIDString);
                     if (isFriend || isFriendReverse)
                     {
                         amount = CheckPoints(PluginRewards.PlayerFriend);
@@ -132,8 +130,8 @@ namespace Oxide.Plugins
 
                 if (Clans && _config.Rewards[PluginRewards.ClanMember] != 0)
                 {
-                    var victimClan = Clans.Call<string>("GetClanOf", victim.userID);
-                    var playerClan = Clans.Call<string>("GetClanOf", player.userID);
+                    var victimClan = Clans.Call<string>("GetClanOf", victim.UserIDString);
+                    var playerClan = Clans.Call<string>("GetClanOf", player.UserIDString);
                     if (victimClan == playerClan && !string.IsNullOrEmpty(playerClan))
                     {
                         amount = CheckPoints(PluginRewards.ClanMember);
@@ -141,7 +139,7 @@ namespace Oxide.Plugins
                     }
                 }
                 
-                if(player.Team!=null && player.Team.members.Contains(victim.userID) && _config.Rewards[PluginRewards.TeamMember] != 0)
+                if(player.Team!=null && player.Team.members.Contains(victim.userID.Get()) && _config.Rewards[PluginRewards.TeamMember] != 0)
                 {
                     amount = CheckPoints(PluginRewards.TeamMember);
                     animal = "team member";
@@ -153,7 +151,7 @@ namespace Oxide.Plugins
                 if (entity is NPCPlayer)
                 {
                     var npcPlayer = (NPCPlayer)entity;
-                    animal = npcPlayer?.displayName ?? "Murderer";
+                    animal = npcPlayer.displayName ?? "Murderer";
                     
                     //Patch Tunnel Dwellers
                     if (entity.ShortPrefabName.Contains("npc_tunnel"))
@@ -164,8 +162,7 @@ namespace Oxide.Plugins
                     //set the default amount to that of a murdered or 125
                     amount = CheckPoints(animal, CheckPoints("Murderer", 125));
 
-                    long npcId;
-                    if (long.TryParse(animal, out npcId))
+                    if (long.TryParse(animal, out var npcId))
                     {
                         //override names that are just numbers
                         amount = CheckPoints(entity.ShortPrefabName, CheckPoints("Murderer", 125));
